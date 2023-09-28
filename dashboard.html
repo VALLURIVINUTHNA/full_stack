@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Weather Forecast App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+    <style>
+      body{
+      background-image: url("https://wallpaperaccess.com/full/5466358.jpg");
+      background-size: cover;
+      background-repeat: no-repeat;
+      }
+      .container {
+          max-width: 500px;
+          margin: 0 auto;
+          text-align: center;
+          padding: 20px;
+      }
+      h1{
+          text-shadow: 1px 1px 4px black;
+          color: rgb(0, 0, 0);
+      }
+      .main{
+          height: 170px;
+          width: 600px;
+          border-radius: 30px;
+          background-color: rgba(100, 148, 237, 0.505);
+          padding-top: 30px;
+          border: 3px solid white;
+          margin-left: -80px;
+          box-shadow: 0px 0px 7px black;
+      }
+      button{
+          height: 40px;
+          border-radius: 20px;
+          border: 2px solid rgb(33, 76, 204);
+          width: 130px;
+          background-color: rgb(33, 76, 204);
+          color: aliceblue;
+      }
+      #cityInput{
+          width: 230px;
+          padding: 5px;
+          margin-right: 10px;
+          border-radius: 10px;
+          border: 2px solid white;
+      }
+
+      button {
+          padding: 5px 10px;
+      }
+
+      #currentWeather {
+          margin-top: 20px;
+        
+      }
+
+      #forecast {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-around;
+          margin-top: 20px;
+        
+      }
+
+      .forecast-item {
+          width: 200px;
+          margin-bottom: 10px;
+          padding: 10px;
+          border: 1px solid #090101;
+          border-radius: 40px;
+          background-color: rgba(29, 30, 30, 0.503);
+          color: aliceblue;
+          margin-left: -50px;
+
+      }
+      .weath{
+          width: 500px;
+          height: 250px;
+          background-color: rgba(0, 0, 0, 0.497);
+          color: aliceblue;
+          border-radius: 30px;
+          padding: 10px;
+          margin-left: -30px;
+          border: 2px solid black;
+      }
+      h2{
+          font-size: xx-large;
+        
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+    <div class="main">
+    <h1>Weather Forecast</h1>
+    <input type="text" id="cityInput" placeholder="Enter city name">
+    <button onclick="getWeather()">Get Forecast</button>
+    </div>
+    <div id="currentWeather"></div>
+    <h2>7-Day Forecast</h2>
+    <div id="forecast"></div>
+    </div>
+
+
+
+  <script>
+    function getWeather() {
+    var city = document.getElementById("cityInput").value;
+    var apiKey = "2e867b73f23beea6515b38e935ecc19f"; // Replace with your OpenWeatherMap API key
+
+    // Fetch current weather
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => {
+            var currentWeather = document.getElementById("currentWeather");
+            currentWeather.innerHTML = `
+            <div class="weath">
+                <h2>Current Weather in ${data.name}</h2>
+                <p>Temperature: ${data.main.temp}°C</p>
+                <p>Humidity: ${data.main.humidity}%</p>
+                <p>Wind Speed: ${data.wind.speed} m/s</p>
+                <p>Weather Condition: ${data.weather[0].main}</p>
+                <p>Date and Time: ${new Date().toLocaleString()}</p>
+                </div>
+            `;
+        });
+
+    fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`)
+        .then(response => response.json())
+        .then(data => {
+            var forecast = document.getElementById("forecast");
+            forecast.innerHTML = "";
+
+            var days = {};
+            var forecastItems = [];
+            data.list.forEach(item => {
+                var date = item.dt_txt.split(" ")[0];
+
+                if (!days[date]) {
+                    days[date] = [];
+                }
+
+                days[date].push(item);
+            });
+
+            Object.keys(days).forEach(date => {
+                var dayData = days[date];
+                var minTemp = Number.MAX_SAFE_INTEGER;
+                var maxTemp = Number.MIN_SAFE_INTEGER;
+                var humiditySum = 0;
+                var weatherConditions = {};
+
+                dayData.forEach(item => {
+                    minTemp = Math.min(minTemp, item.main.temp_min);
+                    maxTemp = Math.max(maxTemp, item.main.temp_max);
+                    humiditySum += item.main.humidity;
+
+                    if (!weatherConditions[item.weather[0].main]) {
+                        weatherConditions[item.weather[0].main] = 1;
+                    } else {
+                        weatherConditions[item.weather[0].main]++;
+                    }
+                });
+
+                var avgHumidity = Math.round(humiditySum / dayData.length);
+                var mostCommonCondition = Object.keys(weatherConditions).reduce((a, b) =>
+                    weatherConditions[a] > weatherConditions[b] ? a : b
+                );
+
+                var forecastItem = `
+                
+                    <div class="forecast-item">
+                        <h3>${new Date(date).toLocaleDateString("en-US", { weekday: "long" })}</h3>
+                        <p>Temperature Range: ${minTemp}°C - ${maxTemp}°C</p>
+                        <p>Average Humidity: ${avgHumidity}%</p>
+                        <p>Most Common Condition: ${mostCommonCondition}</p>
+                    </div>
+                    
+                `;
+
+                forecastItems.push(forecastItem);
+            });
+
+            forecast.innerHTML = forecastItems.join("");
+        });
+        
+}
+  </script>
+</body>
+</html>
